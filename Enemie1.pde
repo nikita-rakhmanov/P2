@@ -13,10 +13,6 @@ class Enemy extends PhysicsObject {
     private boolean isRunning = false;
     private Character player; 
     public SteeringController steeringController;
-    private boolean isPlatformBound = false;  // Whether enemy is bound to a platform
-    private float platformX;                  // Center X of platform
-    private float platformWidth;              // Width of platform
-    private float platformY;                  // Y position of platform
 
     
     // Attack collision detection
@@ -117,10 +113,6 @@ class Enemy extends PhysicsObject {
         // handle physics
         super.update();
 
-        // Apply platform constraints if needed
-        if (isPlatformBound) {
-            handlePlatformConstraints();
-        }
     }
     
     void updateBehavior() {
