@@ -117,6 +117,8 @@ class Enemy extends PhysicsObject {
         // handle physics
         super.update();
 
+        updateBehaviorsByHealth();
+
         // Apply platform constraints if needed
         if (isPlatformBound) {
             handlePlatformConstraints();
@@ -268,31 +270,50 @@ class Enemy extends PhysicsObject {
         this.platformX = platformX;
         this.platformWidth = platformWidth;
         this.platformY = platformY;
-        }
+    }
 
-        private void handlePlatformConstraints() {
+    private void handlePlatformConstraints() {
         if (!isPlatformBound) return;
         
         // Calculate platform boundaries
         float leftEdge = platformX - platformWidth/2 + 15;
         float rightEdge = platformX + platformWidth/2 - 15;
         
-        // More aggressive push back with randomness to prevent sticking
+        // Change direction when reaching platform edges
         if (position.x <= leftEdge) {
             position.x = leftEdge + 2;  // Push slightly away from edge
-            velocity.x = random(0.5, 1.0);  // Random rightward velocity
+            velocity.x = abs(velocity.x) + 0.3;  // Always move right when hitting left edge
+            hFlip = false;  // Face right
         } else if (position.x >= rightEdge) {
             position.x = rightEdge - 2;  // Push slightly away from edge
-            velocity.x = random(-1.0, -0.5);  // Random leftward velocity
+            velocity.x = -abs(velocity.x) - 0.3;  // Always move left when hitting right edge
+            hFlip = true;  // Face left
         }
         
-        // Add tiny random movement if very slow
-        if (abs(velocity.x) < 0.1) {
-            velocity.x += random(-0.2, 0.2);
-        }
-        
-        // Maintain vertical position
+        // Maintain vertical position - enforce this strictly 
         position.y = platformY;
         velocity.y = 0;
+    }
+
+    void updateBehaviorsByHealth() {
+        // Check if we have a flee behavior
+        boolean hasFlee = false;
+        float fleeWeight = 0;
+        
+        // Find if we have a flee behavior and store its weight
+        for (int i = 0; i < steeringController.behaviors.size(); i++) {
+            if (steeringController.behaviors.get(i) instanceof Flee) {
+                hasFlee = true;
+                fleeWeight = steeringController.weights.get(i);
+                
+                // If health is above 50 (50%), temporarily set flee weight to 0 (disable it)
+                // Only for enemy 4 (which is at index 3 in the enemies array)
+                if (health > 50 && this == enemies.get(3)) {
+                    steeringController.weights.set(i, 0.0); // Disable flee behavior
+                } else {
+                    steeringController.weights.set(i, fleeWeight); // Re-enable with original weight
+                }
+            }
+        }
     }
 }
