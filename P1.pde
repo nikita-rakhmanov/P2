@@ -69,6 +69,8 @@ void setup() {
   enemies.add(enemy3);
   enemies.add(enemy4);
 
+  float platformWidth = 32; // width of platform_through.png
+
   enemies.get(0).steeringController.clearBehaviors();
   enemies.get(0).steeringController.addBehavior(new Seek(character.position, 0.7), 1.0);
 
@@ -77,17 +79,18 @@ void setup() {
   enemies.get(1).steeringController.addBehavior(new Seek(character.position, 0.4), 0.6);
   enemies.get(1).steeringController.addBehavior(new Wander(0.3, 50, 30), 0.4);
 
-  // Enemy 3: Pure Wander - moves randomly, may encounter player by chance
+  // Enemy 3: Wander on platform
   enemies.get(2).steeringController.clearBehaviors();
-  enemies.get(2).steeringController.addBehavior(new Wander(0.3, 70, 40), 1.0);
+  enemies.get(2).steeringController.addBehavior(new Wander(0.12, 20, 10), 1.0);
+  // enemies.get(2).bindToPlatform(width * 0.35f, 3 * 32, height - 330 - 20);
 
-  // Enemy 4: Wander but Flee when player gets close - like a timid creature
+
+  // Enemy 4: Wander on platform and flee from player
   enemies.get(3).steeringController.clearBehaviors();
-  enemies.get(3).steeringController.addBehavior(new Wander(0.3, 50, 30), 0.7);
-  enemies.get(3).steeringController.addBehavior(new Flee(character.position, 0.6, 150), 0.9);
-  
-  float platformWidth = 32; // width of platform_through.png
-  
+  enemies.get(3).steeringController.addBehavior(new Wander(0.12, 20, 10), 0.4);
+  enemies.get(3).steeringController.addBehavior(new Flee(character.position, 0.6, 150), 0.7);
+  // enemies.get(3).bindToPlatform(width * 0.65f, 3 * 32, height - 330 - 20);
+    
   // Create platforms for vertical traversal 
   // First layer - low platforms 
   platforms.add(new PlatformObject(width * 0.25f - platformWidth, height - 150)); 
@@ -560,21 +563,13 @@ void resetGame() {
   
   // Recreate enemies with opposite patrol directions
   Enemy enemy1 = new Enemy(new PVector(width / 4, height - 30), character);
-  // enemy1.setPatrolDirection(true); 
   
   Enemy enemy2 = new Enemy(new PVector(width * 3 / 4, height - 30), character);
-  // enemy2.setPatrolDirection(false); 
   
   // Recreate two more enemies on the third layer platforms 
   Enemy enemy3 = new Enemy(new PVector(width * 0.35f, height - 330 - 20), character);
-  // enemy3.setPatrolDirection(true); 
-  // enemy3.setStatic(true); 
-  // enemy3.setPatrolDistance(50.0f); 
   
   Enemy enemy4 = new Enemy(new PVector(width * 0.65f, height - 330 - 20), character); 
-  // enemy4.setPatrolDirection(false); 
-  // enemy4.setStatic(true); 
-  // enemy4.setPatrolDistance(50.0f); 
   
   enemies.add(enemy1);
   enemies.add(enemy2);
@@ -582,7 +577,28 @@ void resetGame() {
   enemies.add(enemy4);
 
   float platformWidth = 32;
-  
+
+  enemies.get(0).steeringController.clearBehaviors();
+  enemies.get(0).steeringController.addBehavior(new Seek(character.position, 0.7), 1.0);
+
+  // Enemy 2: Mix of seeking player and wandering - less predictable hunter
+  enemies.get(1).steeringController.clearBehaviors();
+  enemies.get(1).steeringController.addBehavior(new Seek(character.position, 0.4), 0.6);
+  enemies.get(1).steeringController.addBehavior(new Wander(0.3, 50, 30), 0.4);
+
+  // Enemy 3: Wander on platform
+  enemies.get(2).steeringController.clearBehaviors();
+  enemies.get(2).steeringController.addBehavior(new Wander(0.3, 70, 40), 0.5);
+  enemies.get(2).bindToPlatform(width * 0.35f, 3 * 32, height - 330 - 20);
+
+
+
+  // Enemy 4: Wander on platform and flee from player
+  enemies.get(3).steeringController.clearBehaviors();
+  enemies.get(3).steeringController.addBehavior(new Wander(0.3, 50, 30), 0.4);
+  enemies.get(3).steeringController.addBehavior(new Flee(character.position, 0.6, 150), 0.7);
+  enemies.get(3).bindToPlatform(width * 0.65f, 3 * 32, height - 330 - 20);
+
   // Recreate platforms
   platforms.add(new PlatformObject(width * 0.25f - platformWidth, height - 150));
   platforms.add(new PlatformObject(width * 0.25f, height - 150));                 

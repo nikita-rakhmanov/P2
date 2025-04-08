@@ -13,6 +13,11 @@ class Enemy extends PhysicsObject {
     private boolean isRunning = false;
     private Character player; 
     public SteeringController steeringController;
+    private boolean isPlatformBound = false;  // Whether enemy is bound to a platform
+    private float platformX;                  // Center X of platform
+    private float platformWidth;              // Width of platform
+    private float platformY;                  // Y position of platform
+
     
     // Attack collision detection
     private final static int ATTACK_COLLISION_START_FRAME = 4; 
@@ -111,6 +116,11 @@ class Enemy extends PhysicsObject {
         
         // handle physics
         super.update();
+
+        // Apply platform constraints if needed
+        if (isPlatformBound) {
+            handlePlatformConstraints();
+        }
     }
     
     void updateBehavior() {
@@ -251,5 +261,38 @@ class Enemy extends PhysicsObject {
     // get health
     public int getHealth() {
         return health;
+    }
+
+    public void bindToPlatform(float platformX, float platformWidth, float platformY) {
+        this.isPlatformBound = true;
+        this.platformX = platformX;
+        this.platformWidth = platformWidth;
+        this.platformY = platformY;
+        }
+
+        private void handlePlatformConstraints() {
+        if (!isPlatformBound) return;
+        
+        // Calculate platform boundaries
+        float leftEdge = platformX - platformWidth/2 + 15;
+        float rightEdge = platformX + platformWidth/2 - 15;
+        
+        // More aggressive push back with randomness to prevent sticking
+        if (position.x <= leftEdge) {
+            position.x = leftEdge + 2;  // Push slightly away from edge
+            velocity.x = random(0.5, 1.0);  // Random rightward velocity
+        } else if (position.x >= rightEdge) {
+            position.x = rightEdge - 2;  // Push slightly away from edge
+            velocity.x = random(-1.0, -0.5);  // Random leftward velocity
+        }
+        
+        // Add tiny random movement if very slow
+        if (abs(velocity.x) < 0.1) {
+            velocity.x += random(-0.2, 0.2);
+        }
+        
+        // Maintain vertical position
+        position.y = platformY;
+        velocity.y = 0;
     }
 }
