@@ -117,8 +117,6 @@ class Enemy extends PhysicsObject {
         // handle physics
         super.update();
 
-        updateBehaviorsByHealth();
-
         // Apply platform constraints if needed
         if (isPlatformBound) {
             handlePlatformConstraints();
@@ -295,25 +293,4 @@ class Enemy extends PhysicsObject {
         velocity.y = 0;
     }
 
-    void updateBehaviorsByHealth() {
-        // Check if we have a flee behavior
-        boolean hasFlee = false;
-        float fleeWeight = 0;
-        
-        // Find if we have a flee behavior and store its weight
-        for (int i = 0; i < steeringController.behaviors.size(); i++) {
-            if (steeringController.behaviors.get(i) instanceof Flee) {
-                hasFlee = true;
-                fleeWeight = steeringController.weights.get(i);
-                
-                // If health is above 50 (50%), temporarily set flee weight to 0 (disable it)
-                // Only for enemy 4 (which is at index 3 in the enemies array)
-                if (health > 50 && this == enemies.get(3)) {
-                    steeringController.weights.set(i, 0.0); // Disable flee behavior
-                } else {
-                    steeringController.weights.set(i, fleeWeight); // Re-enable with original weight
-                }
-            }
-        }
-    }
 }
