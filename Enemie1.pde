@@ -263,34 +263,4 @@ class Enemy extends PhysicsObject {
         return health;
     }
 
-    public void bindToPlatform(float platformX, float platformWidth, float platformY) {
-        this.isPlatformBound = true;
-        this.platformX = platformX;
-        this.platformWidth = platformWidth;
-        this.platformY = platformY;
-    }
-
-    private void handlePlatformConstraints() {
-        if (!isPlatformBound) return;
-        
-        // Calculate platform boundaries
-        float leftEdge = platformX - platformWidth/2 + 15;
-        float rightEdge = platformX + platformWidth/2 - 15;
-        
-        // Change direction when reaching platform edges
-        if (position.x <= leftEdge) {
-            position.x = leftEdge + 2;  // Push slightly away from edge
-            velocity.x = abs(velocity.x) + 0.3;  // Always move right when hitting left edge
-            hFlip = false;  // Face right
-        } else if (position.x >= rightEdge) {
-            position.x = rightEdge - 2;  // Push slightly away from edge
-            velocity.x = -abs(velocity.x) - 0.3;  // Always move left when hitting right edge
-            hFlip = true;  // Face left
-        }
-        
-        // Maintain vertical position - enforce this strictly 
-        position.y = platformY;
-        velocity.y = 0;
-    }
-
 }
