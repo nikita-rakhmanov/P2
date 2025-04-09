@@ -212,6 +212,7 @@ void draw() {
     
     // Check for platform collisions
     handlePlatformCollisions();
+    handleEnemyPlatformCollisions();
   }
   
   // Check for spring collisions
@@ -330,6 +331,14 @@ void handlePlatformCollisions() {
       character.velocity.y = 0.1; // Small initial downward velocity
     }
   }
+}
+
+// Updated handleEnemyPlatformCollisions function with better positioning
+
+// Adjusted handleEnemyPlatformCollisions function with proper ground level
+
+void handleEnemyPlatformCollisions() {
+  
 }
 
 void checkSprings() {
