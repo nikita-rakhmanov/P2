@@ -182,7 +182,8 @@ class Enemy extends PhysicsObject {
         steeringController.calculateSteering();
         
         // Update animation state based on movement
-        isRunning = velocity.mag() > 0.1;
+        isRunning = Math.abs(velocity.x) > 0.1;
+
         
         // Update facing direction based on movement
         if (velocity.x < -0.1) {

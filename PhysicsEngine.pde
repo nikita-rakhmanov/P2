@@ -60,18 +60,24 @@ class PhysicsEngine {
         PhysicsObject objA = objects.get(i);
         
         for (int j = i + 1; j < objects.size(); j++) {
-        PhysicsObject objB = objects.get(j);
-        
-        // Skip collisions between Character and Enemy or Platform
-        if ((objA instanceof Character && (objB instanceof Enemy || objB instanceof PlatformObject)) || 
-            ((objA instanceof Enemy || objA instanceof PlatformObject) && objB instanceof Character)) {
-            continue;  // Skip to the next iteration
-        }
-        
-        // Check and resolve collision
-        if (objA.isColliding(objB)) {
-            objA.resolveCollision(objB);
-        }
+            PhysicsObject objB = objects.get(j);
+            
+            // Skip collisions between:
+            // 1. Character and Enemy/Platform
+            // 2. Enemy and Platform
+            // 3. Enemy and other Enemies (added this)
+            if ((objA instanceof Character && (objB instanceof Enemy || objB instanceof PlatformObject)) || 
+                ((objA instanceof Enemy || objA instanceof PlatformObject) && objB instanceof Character) ||
+                (objA instanceof Enemy && objB instanceof PlatformObject) ||
+                (objA instanceof PlatformObject && objB instanceof Enemy) ||
+                (objA instanceof Enemy && objB instanceof Enemy)) {  // Added this condition
+                continue;  // Skip to the next iteration
+            }
+            
+            // Check and resolve collision
+            if (objA.isColliding(objB)) {
+                objA.resolveCollision(objB);
+            }
         }
     }
 }

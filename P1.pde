@@ -52,9 +52,9 @@ void setup() {
   Enemy enemy2 = new Enemy(new PVector(width * 3 / 4, height - 30), character);
   
   // Create two more enemies
-  Enemy enemy3 = new Enemy(new PVector(width * 0.35f, height - 330 - 5), character); 
+  Enemy enemy3 = new Enemy(new PVector(width * 0.35f, height - 330 - 20), character); 
   
-  Enemy enemy4 = new Enemy(new PVector(width * 0.65f, height - 330 - 5), character); 
+  Enemy enemy4 = new Enemy(new PVector(width * 0.65f, height - 330 - 20), character); 
 
   enemies.add(enemy1);
   enemies.add(enemy2);
@@ -333,13 +333,54 @@ void handlePlatformCollisions() {
   }
 }
 
-// Updated handleEnemyPlatformCollisions function with better positioning
-
-// Adjusted handleEnemyPlatformCollisions function with proper ground level
-
 void handleEnemyPlatformCollisions() {
+  float groundLevel = height;
   
+  for (Enemy enemy : enemies) {
+    if (enemy.isDead) continue;
+    
+    float enemyFeetY = enemy.position.y + enemy.radius - 5;
+    boolean onSomething = false;
+    
+    // Check if enemy is on the ground
+    if (enemyFeetY >= groundLevel) {
+      enemy.position.y = groundLevel - enemy.radius;
+      enemy.velocity.y = 0;
+      onSomething = true;
+    } 
+    // Only check platforms if enemy is above ground level
+    else {
+      // Check if enemy is on any platform
+      for (PlatformObject platform : platforms) {
+        float platformWidth = platform.platformImage.width;
+        float platformHeight = platform.platformImage.height;
+        float platformTopY = platform.position.y - platformHeight/2;
+        float platformLeftX = platform.position.x - platformWidth/2;
+        float platformRightX = platform.position.x + platformWidth/2;
+        
+        // Check if enemy is horizontally within platform bounds
+        if (enemy.position.x + enemy.radius * 0.8 >= platformLeftX && 
+            enemy.position.x - enemy.radius * 0.8 <= platformRightX) {
+          
+          // Check if enemy is on this platform (feet at platform level)
+          if (Math.abs(enemyFeetY - platformTopY) < 5) {
+            enemy.position.y = platformTopY - enemy.radius;
+            enemy.velocity.y = 0;
+            onSomething = true;
+            break;
+          }
+        }
+      }
+    }
+    
+    // If enemy is not on ground or any platform, ensure they fall
+    if (!onSomething && enemy.velocity.y <= 0) {
+      enemy.velocity.y = 0.1; // Start falling if not already falling
+    }
+  }
 }
+
+
 
 void checkSprings() {
   for (Spring spring : springs) {
