@@ -280,20 +280,37 @@ void draw() {
     PVector targetPosition = new PVector();
     
     if (currentCamera == 1) {
-      // For default camera, gradually move to center of the screen
+      // Default camera logic (unchanged)
       float progressToDefaultView = 1.0 - constrain((currentCameraZoom - 1.0) / (cameraZoom - 1.0), 0, 1);
-      
-      // Calculate where the player would be at default scale
       targetPosition.x = width/2 - character.position.x;
       targetPosition.y = height/2 - character.position.y;
-      
-      // As we approach default camera view (zoom = 1.0), blend towards center position
       targetPosition.x = lerp(targetPosition.x, 0, progressToDefaultView);
       targetPosition.y = lerp(targetPosition.y, 0, progressToDefaultView);
     } else {
-      // For follow camera, center directly on player
-      targetPosition.x = width/2 - character.position.x * currentCameraZoom;
-      targetPosition.y = height/2 - character.position.y * currentCameraZoom;
+      // For follow camera, constrain view with proper boundary handling
+      
+      // Calculate the visible area in world coordinates
+      float visibleWidth = width / currentCameraZoom;
+      float visibleHeight = height / currentCameraZoom;
+      
+      // Check if the visible area is larger than the game world
+      if (visibleWidth >= width || visibleHeight >= height) {
+        // If visible area is larger than game world, center on the game world
+        targetPosition.x = width/2 - (width/2) * currentCameraZoom;
+        targetPosition.y = height/2 - (height/2) * currentCameraZoom;
+      } else {
+        // Normal case - constrain player within appropriate margins
+        float marginX = visibleWidth / 2;
+        float marginY = visibleHeight / 2;
+        
+        // Constrain player position to ensure it's not too close to the edges
+        float boundedPlayerX = constrain(character.position.x, marginX, width - marginX);
+        float boundedPlayerY = constrain(character.position.y, marginY, height - marginY);
+        
+        // Set camera position based on this bounded position
+        targetPosition.x = width/2 - boundedPlayerX * currentCameraZoom;
+        targetPosition.y = height/2 - boundedPlayerY * currentCameraZoom;
+      }
     }
     
     // Adaptive lerp speed based on camera mode and distance
@@ -374,10 +391,10 @@ void draw() {
   displayHUD();
   
   // Show camera info
-  // fill(255);
-  // textSize(16);
-  // textAlign(LEFT);
-  // text("Camera: " + (currentCamera == 1 ? "Default" : "Follow Player") + " (Press 1 or 2 to change)", 20, height - 20);
+//   fill(255);
+//   textSize(16);
+//   textAlign(LEFT);
+//   text("Camera: " + (currentCamera == 1 ? "Default" : "Follow Player") + " (Press 1 or 2 to change)", 20, height - 20);
 }
 
 void handleBulletCollisions() {
