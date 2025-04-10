@@ -62,7 +62,7 @@ void setup() {
   enemies.add(enemy4);
 
   // Configure initial states
-  enemies.get(0).fsm.forceState(EnemyState.CHASE);
+  enemies.get(0).fsm.forceState(EnemyState.PATROL);
   enemies.get(1).fsm.forceState(EnemyState.PATROL);
   enemies.get(2).fsm.forceState(EnemyState.IDLE);
   enemies.get(3).fsm.forceState(EnemyState.PATROL);
@@ -697,7 +697,7 @@ void resetGame() {
   enemies.add(enemy4);
 
   // Configure initial states
-  enemies.get(0).fsm.forceState(EnemyState.CHASE);
+  enemies.get(0).fsm.forceState(EnemyState.PATROL);
   enemies.get(1).fsm.forceState(EnemyState.PATROL);
   enemies.get(2).fsm.forceState(EnemyState.IDLE);
   enemies.get(3).fsm.forceState(EnemyState.PATROL);
