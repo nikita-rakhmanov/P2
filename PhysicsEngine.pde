@@ -65,7 +65,7 @@ class PhysicsEngine {
             // Skip collisions between:
             // 1. Character and Enemy/Platform
             // 2. Enemy and Platform
-            // 3. Enemy and other Enemies (added this)
+            // 3. Enemy and other Enemies 
             if ((objA instanceof Character && (objB instanceof Enemy || objB instanceof PlatformObject)) || 
                 ((objA instanceof Enemy || objA instanceof PlatformObject) && objB instanceof Character) ||
                 (objA instanceof Enemy && objB instanceof PlatformObject) ||

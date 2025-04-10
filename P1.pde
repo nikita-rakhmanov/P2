@@ -71,13 +71,17 @@ void setup() {
   enemies.get(1).steeringController.addBehavior(new Seek(character.position, 0.4), 0.6);
   enemies.get(1).steeringController.addBehavior(new Wander(0.3, 50, 30), 0.4);
 
+  float platform3LeftX = width * 0.35f - platformWidth - platformWidth/2; // Leftmost edge of left platform
+  float platform3RightX = width * 0.35f + platformWidth + platformWidth/2; // Rightmost edge of right platform
+  float platform3Y = height - 330 - 8; // Approximate top surface of platform (-8 for visual adjustment)
+
   // Enemy 3: Wander on platform - increase wander parameters
   enemies.get(2).steeringController.clearBehaviors();
-  enemies.get(2).steeringController.addBehavior(new Wander(0.18, 30, 15), 1.0);
-
+  enemies.get(2).steeringController.addBehavior(
+    new BoundedWander(0.18, 30, 15, platform3LeftX, platform3RightX, platform3Y), 1.0);
   // Enemy 4: Wander on platform and flee from player
   enemies.get(3).steeringController.clearBehaviors();
-  enemies.get(3).steeringController.addBehavior(new Flee(character.position, 0.6, 150), 0.7);
+  enemies.get(3).steeringController.addBehavior(new Flee(character.position, 0.9, 150), 0.7);
     
   // Create platforms for vertical traversal 
   // First layer - low platforms 
