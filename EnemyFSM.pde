@@ -175,7 +175,7 @@ class PatrolStateHandler implements EnemyStateHandler {
       case 4: // Evasive - large patrol area
         patrolWidth = 100.0f;
         // Add flee behavior to move away from player even during patrol
-        enemy.steeringController.addBehavior(new Flee(enemy.player.position, 0.8f, 150), 0.6f);
+        enemy.steeringController.addBehavior(new Flee(enemy.player.position, 1.2f, 200), 0.8f);
         break;
     }
     
@@ -199,6 +199,15 @@ class PatrolStateHandler implements EnemyStateHandler {
   void update() {
     // Calculate steering forces for patrol
     Enemy enemy = fsm.getOwner();
+    
+    // Update the target position for any Flee behaviors
+    for (int i = 0; i < enemy.steeringController.behaviors.size(); i++) {
+      SteeringBehavior behavior = enemy.steeringController.behaviors.get(i);
+      if (behavior instanceof Flee) {
+        ((Flee)behavior).targetPosition = enemy.player.position;
+      }
+    }
+    
     enemy.steeringController.calculateSteering();
   }
   
@@ -262,7 +271,7 @@ class ChaseStateHandler implements EnemyStateHandler {
         acceleration = 0.6f;
         weight = 0.4f;
         // This enemy prefers to keep distance
-        enemy.steeringController.addBehavior(new Flee(enemy.player.position, 0.7f, 100), 0.6f);
+        enemy.steeringController.addBehavior(new Flee(enemy.player.position, 1f, 100), 0.6f);
         break;
     }
     

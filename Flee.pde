@@ -20,7 +20,8 @@ class Flee implements SteeringBehavior {
     }
     
     // Scale by distance (flee harder when closer)
-    float scale = map(distance, 0, fleeRadius, 1.0, 0.0);
+    // Modified to create stronger fleeing behavior
+    float scale = map(distance, 0, fleeRadius, 1.5, 0.5);
     
     // Return acceleration away from target
     direction.normalize();
