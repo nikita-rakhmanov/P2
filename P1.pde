@@ -12,6 +12,10 @@ PhysicsEngine physicsEngine;
 long gameStartTime = 0;
 long gameEndTime = 0;
 boolean timerRunning = false;
+GridMap gridMap;
+static PathFinder pathFinder;
+boolean showDebugGrid = false;
+boolean showDebugPath = false;
 
 class PlatformObject extends PhysicsObject {
   PImage platformImage;
@@ -64,26 +68,6 @@ void setup() {
   enemies.get(3).fsm.forceState(EnemyState.PATROL);
 
   float platformWidth = 32; // width of platform_through.png
-
-  // enemies.get(0).steeringController.clearBehaviors();
-  // enemies.get(0).steeringController.addBehavior(new Seek(character.position, 0.7), 1.0);
-
-  // // Enemy 2: Mix of seeking player and wandering - less predictable hunter
-  // enemies.get(1).steeringController.clearBehaviors();
-  // enemies.get(1).steeringController.addBehavior(new Seek(character.position, 0.4), 0.6);
-  // enemies.get(1).steeringController.addBehavior(new Wander(0.3, 50, 30), 0.4);
-
-  // float platform3LeftX = width * 0.35f - platformWidth - platformWidth/2; // Leftmost edge of left platform
-  // float platform3RightX = width * 0.35f + platformWidth + platformWidth/2; // Rightmost edge of right platform
-  // float platform3Y = height - 330 - 8; // Approximate top surface of platform (-8 for visual adjustment)
-
-  // // Enemy 3: Wander on platform - increase wander parameters
-  // enemies.get(2).steeringController.clearBehaviors();
-  // enemies.get(2).steeringController.addBehavior(
-  //   new BoundedWander(0.18, 30, 15, platform3LeftX, platform3RightX, platform3Y), 1.0);
-  // // Enemy 4: Wander on platform and flee from player
-  // enemies.get(3).steeringController.clearBehaviors();
-  // enemies.get(3).steeringController.addBehavior(new Flee(character.position, 0.9, 150), 0.7);
     
   // Create platforms for vertical traversal 
   // First layer - low platforms 
@@ -121,6 +105,9 @@ void setup() {
   
   // Add a coin on the top platform
   coins.add(new Coin(new PVector(width * 0.5f, height - 510 - 10))); 
+
+  // Setup pathfinding
+  setupPathfinding();
   
   // Add objects to physics engine
   physicsEngine.addObject(character);
@@ -151,6 +138,68 @@ void setup() {
   }
 }
 
+// Add this function to initialize the pathfinding grid
+void setupPathfinding() {
+  float cellSize = 16.0f; // Size of each grid cell in pixels
+  gridMap = new GridMap(width, height, cellSize);
+  
+  // Get actual ground height based on your game
+  float groundLevel = height; // This is where the character stands on the ground
+  
+  // Mark all cells below ground level as non-walkable
+  for (int x = 0; x < gridMap.cols; x++) {
+    for (int y = 0; y < gridMap.rows; y++) {
+      float worldY = (y + 0.5f) * cellSize; // Center of cell in world coordinates
+      
+      if (worldY >= groundLevel) {
+        gridMap.setWalkable(x, y, false);
+      }
+    }
+  }
+  
+  // Mark platforms as non-walkable but areas above platforms as walkable
+  for (PlatformObject platform : platforms) {
+    float platformWidth = platform.platformImage.width;
+    float platformHeight = platform.platformImage.height;
+    
+    // Get grid coordinates for platform
+    PVector topLeft = gridMap.worldToGrid(new PVector(
+      platform.position.x - platformWidth/2,
+      platform.position.y - platformHeight/2
+    ));
+    
+    PVector bottomRight = gridMap.worldToGrid(new PVector(
+      platform.position.x + platformWidth/2,
+      platform.position.y + platformHeight/2
+    ));
+    
+    // Mark platform area as non-walkable
+    for (int x = (int)topLeft.x; x <= (int)bottomRight.x; x++) {
+      for (int y = (int)topLeft.y; y <= (int)bottomRight.y; y++) {
+        if (gridMap.isValid(x, y)) {
+          gridMap.setWalkable(x, y, false);
+        }
+      }
+    }
+    
+    // Mark the area directly above platform as walkable
+    for (int x = (int)topLeft.x; x <= (int)bottomRight.x; x++) {
+      int y = (int)topLeft.y - 1;
+      if (gridMap.isValid(x, y)) {
+        gridMap.setWalkable(x, y, true);
+      }
+    }
+  }
+  
+  // Create the pathfinder
+  pathFinder = new PathFinder(gridMap);
+}
+
+// getter for PathFinder
+PathFinder getPathFinder() {
+  return pathFinder;
+}
+
 // Update keyPressed to start the timer when the game begins
 void keyPressed() {
   if (!gameStarted) {
@@ -164,6 +213,27 @@ void keyPressed() {
     character.handleKeyPressed(key);
   } else if (key == 'r' || key == 'R') { // Allow restart with 'R' key
     resetGame();
+  }
+
+  // Toggle debug grid display with 'G' key
+  if (key == 'g' || key == 'G') {
+    showDebugGrid = !showDebugGrid;
+  }
+  
+  // Toggle debug path display with 'P' key
+  if (key == 'p' || key == 'P') {
+    showDebugPath = !showDebugPath;
+    // Update the pathfinder debug mode
+    pathFinder.setDebugMode(showDebugPath);
+    
+    // Update all PathFollow behaviors
+    for (Enemy enemy : enemies) {
+      for (SteeringBehavior behavior : enemy.steeringController.behaviors) {
+        if (behavior instanceof PathFollow) {
+          ((PathFollow)behavior).setDebugDraw(showDebugPath);
+        }
+      }
+    }
   }
 }
 
@@ -183,6 +253,16 @@ void draw() {
   background(0);
   bg.display();
   ground.display();
+
+  // Draw debug grid if enabled
+  if (showDebugGrid) {
+    gridMap.debugDraw();
+  }
+  
+  // Draw pathfinder debug info if enabled
+  if (showDebugPath) {
+    pathFinder.debugDraw();
+  }
   
   if (!gameStarted) {
     displayStartScreen();

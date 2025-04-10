@@ -56,7 +56,7 @@ class EnemyFSM {
       newHandler.enter();
       
       // Debug message
-      println("Enemy state changed from " + currentState + " to " + nextState);
+    //   println("Enemy state changed from " + currentState + " to " + nextState);
     }
   }
   
@@ -71,7 +71,7 @@ class EnemyFSM {
       // Enter new state
       stateHandlers.get(currentState).enter();
       
-      println("Enemy state forced to " + newState);
+    //   println("Enemy state forced to " + newState);
     }
   }
   
@@ -170,7 +170,7 @@ class PatrolStateHandler implements EnemyStateHandler {
         patrolWidth = 150.0f;
         break;
       case 3: // Platform enemy - stays in place more
-        patrolWidth = 80.0f;
+        patrolWidth = 100.0f;
         break;
       case 4: // Evasive - large patrol area
         patrolWidth = 100.0f;
@@ -236,8 +236,13 @@ class PatrolStateHandler implements EnemyStateHandler {
   }
 }
 
+// Simplified ChaseStateHandler class that follows exactly the logic you described
 class ChaseStateHandler implements EnemyStateHandler {
   private EnemyFSM fsm;
+  private Path currentPath;
+  private PVector lastPlayerPosition;
+  private float playerMovementThreshold = 50.0f; // Distance player must move to trigger recalculation
+  private boolean usePathfinding = true;
   
   ChaseStateHandler(EnemyFSM fsm) {
     this.fsm = fsm;
@@ -247,60 +252,165 @@ class ChaseStateHandler implements EnemyStateHandler {
     Enemy enemy = fsm.getOwner();
     enemy.steeringController.clearBehaviors();
     
-    // Customize chase behavior based on enemy type
+    // For evasive enemy (type 4), don't use pathfinding at all
+    if (enemy.getEnemyType() == 4) {
+      usePathfinding = false;
+      setupSteeringBehaviors(enemy);
+      enemy.isRunning = true;
+      return;
+    }
+    
+    if (usePathfinding) {
+      // Store initial player position
+      lastPlayerPosition = enemy.player.position.copy();
+      
+      // Calculate initial path when entering chase state
+      calculateNewPath(enemy);
+    } else {
+      // Fallback to normal steering behaviors
+      setupSteeringBehaviors(enemy);
+    }
+    
+    enemy.isRunning = true;
+  }
+  
+  private void calculateNewPath(Enemy enemy) {
+    // Create a path from current enemy position to current player position
+    PVector start = enemy.position.copy();
+    PVector goal = enemy.player.position.copy();
+    
+    try {
+      if (pathFinder != null) {
+        // Get a new path
+        Path newPath = pathFinder.findPath(start, goal);
+        
+        // Only update if we got a valid path
+        if (newPath != null && !newPath.isEmpty()) {
+          currentPath = newPath;
+          updatePathFollowBehavior(enemy);
+        }
+      } else {
+        println("Warning: PathFinder is null, falling back to steering behaviors");
+        usePathfinding = false;
+        setupSteeringBehaviors(enemy);
+      }
+    } catch (Exception e) {
+      println("Error calculating path: " + e.getMessage());
+      usePathfinding = false;
+      setupSteeringBehaviors(enemy);
+    }
+  }
+  
+  private void setupSteeringBehaviors(Enemy enemy) {
+    // This is the fallback behavior if pathfinding fails
     float acceleration = 0.9f;
     float weight = 1.0f;
     
-    // Enemy type specific behaviors
     switch(enemy.getEnemyType()) {
       case 1: // Aggressive chaser
-        acceleration = 1.2f; // Faster
+        acceleration = 1.2f;
         weight = 1.0f;
         break;
       case 2: // Mixed behavior
-        acceleration = 0.7f; // Medium speed
+        acceleration = 0.7f;
         weight = 0.8f;
-        // Add some wandering to make movement less predictable
         enemy.steeringController.addBehavior(new Wander(0.3f, 50, 30), 0.2f);
         break;
-      case 3: // Platform enemy, more cautious
-        acceleration = 0.5f; // Slower
+      case 3: // Platform enemy
+        acceleration = 0.5f;
         weight = 0.6f;
         break;
       case 4: // Evasive enemy
         acceleration = 0.6f;
         weight = 0.4f;
-        // This enemy prefers to keep distance
         enemy.steeringController.addBehavior(new Flee(enemy.player.position, 1f, 100), 0.6f);
         break;
     }
     
-    // Add seek behavior to chase player
     enemy.steeringController.addBehavior(
       new Seek(enemy.player.position, acceleration), weight);
+  }
+  
+  private void updatePathFollowBehavior(Enemy enemy) {
+    // Remove any existing PathFollow behaviors
+    for (int i = enemy.steeringController.behaviors.size() - 1; i >= 0; i--) {
+      if (enemy.steeringController.behaviors.get(i) instanceof PathFollow) {
+        enemy.steeringController.behaviors.remove(i);
+        enemy.steeringController.weights.remove(i);
+      }
+    }
     
-    // Add a small initial force in the player's direction to kickstart movement
-    PVector direction = PVector.sub(enemy.player.position, enemy.position).normalize();
-    enemy.applyForce(PVector.mult(direction, 0.5f));
+    // Add a new PathFollow behavior with the current path
+    float arrivalRadius = 15.0f;
+    float acceleration = 0.9f;
+    float weight = 1.0f;
     
-    enemy.isRunning = true;
+    switch(enemy.getEnemyType()) {
+      case 1: // Aggressive
+        acceleration = 1.2f;
+        arrivalRadius = 12.0f;
+        break;
+      case 2: // Mixed
+        acceleration = 0.7f;
+        arrivalRadius = 15.0f;
+        break;
+      case 3: // Platform
+        acceleration = 0.5f;
+        arrivalRadius = 18.0f;
+        weight = 0.8f;
+        break;
+      case 4: // Evasive
+        acceleration = 0.6f;
+        arrivalRadius = 20.0f;
+        weight = 0.7f;
+        enemy.steeringController.addBehavior(new Flee(enemy.player.position, 0.4f, 80), 0.25f);
+        break;
+    }
+    
+    PathFollow pathFollow = new PathFollow(currentPath, arrivalRadius, acceleration);
+    pathFollow.setDebugDraw(showDebugPath);
+    enemy.steeringController.addBehavior(pathFollow, weight);
   }
   
   void update() {
     Enemy enemy = fsm.getOwner();
     
-    // Update the target position for the seek behavior
-    for (int i = 0; i < enemy.steeringController.behaviors.size(); i++) {
-      SteeringBehavior behavior = enemy.steeringController.behaviors.get(i);
-      if (behavior instanceof Seek) {
-        ((Seek)behavior).targetPosition = enemy.player.position;
+    if (usePathfinding) {
+      // Check if player has moved enough to warrant a path recalculation
+      float playerMovementDistance = PVector.dist(enemy.player.position, lastPlayerPosition);
+      
+      if (playerMovementDistance > playerMovementThreshold) {
+        println("Player moved, recalculating path...");
+        // Player has moved significantly, recalculate path
+        calculateNewPath(enemy);
+        lastPlayerPosition = enemy.player.position.copy();
       }
-      else if (behavior instanceof Flee) {
-        ((Flee)behavior).targetPosition = enemy.player.position;
+      
+      // Check if path is still valid (enemy might have fallen off a platform)
+      if (currentPath != null && !currentPath.isEmpty()) {
+        // If the first waypoint is too far from the enemy, recalculate
+        PVector firstPoint = currentPath.getFirstPoint();
+        if (firstPoint != null) {
+          float distToFirstPoint = PVector.dist(enemy.position, firstPoint);
+          if (distToFirstPoint > 200) {
+            println("Path is too far, recalculating...");
+            calculateNewPath(enemy);
+          }
+        }
+      }
+    } else {
+      // Update target positions for regular steering behaviors
+      for (int i = 0; i < enemy.steeringController.behaviors.size(); i++) {
+        SteeringBehavior behavior = enemy.steeringController.behaviors.get(i);
+        if (behavior instanceof Seek) {
+          ((Seek)behavior).targetPosition = enemy.player.position;
+        } else if (behavior instanceof Flee) {
+          ((Flee)behavior).targetPosition = enemy.player.position;
+        }
       }
     }
     
-    // Calculate steering forces to apply movement
+    // Apply forces
     enemy.steeringController.calculateSteering();
   }
   
@@ -333,11 +443,11 @@ class ChaseStateHandler implements EnemyStateHandler {
         break;
       case 3: // Platform enemy - more hesitant to attack
         attackRange = 20.0f;
-        giveUpRange = 200.0f;
+        giveUpRange = 100.0f;
         break;
       case 4: // Evasive - prefers to keep distance, gives up chase easily
         attackRange = 20.0f;
-        giveUpRange = 180.0f;
+        giveUpRange = 90.0f;
         break;
     }
     
