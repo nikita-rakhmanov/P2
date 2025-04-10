@@ -6,7 +6,13 @@ class Coin {
   private float currentFrame = 0.0f;
   private boolean collected = false;
   private final float ANIMATION_SPEED = 0.2f;
-  private float radius = 15.0f; // collision detection
+  private float radius = 25.0f; // Increased collision radius for larger coin
+  private float scale = 1.5f;   // Scale factor for larger coin
+  
+  // Glow effect properties
+  private float glowIntensity = 0;
+  private float glowSpeed = 0.03f;
+  private color glowColor = color(255, 215, 0, 150); // Golden yellow with transparency
   
   Coin(PVector position) {
     this.position = position.copy();
@@ -30,10 +36,16 @@ class Coin {
       if (currentFrame >= coinFrames.length) {
         currentFrame = 0;
       }
+      
+      // Update the glow effect intensity with a pulsating pattern
+      glowIntensity = 0.5f + 0.5f * sin(frameCount * glowSpeed);
     } else {
       if (currentFrame >= destroyFrames.length) {
         currentFrame = destroyFrames.length - 1;
       }
+      
+      // Fade out the glow when collected
+      glowIntensity = max(0, glowIntensity - 0.05f);
     }
   }
   
@@ -41,11 +53,34 @@ class Coin {
     PImage[] frames = collected ? destroyFrames : coinFrames;
     int frameIndex = min((int)currentFrame, frames.length - 1);
     
-    
     pushStyle();
+    imageMode(CENTER);
     
-    // Draw the coin
-    image(frames[frameIndex], position.x, position.y);
+    // Draw the glowing effect (multiple passes for better glow)
+    if (!collected || glowIntensity > 0) {
+      blendMode(ADD);
+      noStroke();
+      
+      // Outer glow - reduced size
+      fill(glowColor, 40 * glowIntensity);
+      ellipse(position.x, position.y, radius * 2.2f * scale, radius * 2.2f * scale);
+      
+      // Middle glow - reduced size
+      fill(glowColor, 80 * glowIntensity);
+      ellipse(position.x, position.y, radius * 1.6f * scale, radius * 1.6f * scale);
+      
+      // Inner glow - reduced size
+      fill(glowColor, 120 * glowIntensity);
+      ellipse(position.x, position.y, radius * 1.2f * scale, radius * 1.2f * scale);
+      
+      blendMode(BLEND);
+    }
+    
+    // Draw the actual coin image (keep the same size)
+    image(frames[frameIndex], position.x, position.y, 
+          frames[frameIndex].width * scale, 
+          frames[frameIndex].height * scale);
+    
     popStyle();
   }
   
