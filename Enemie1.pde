@@ -17,6 +17,9 @@ class Enemy extends PhysicsObject {
     // Add FSM field
     public EnemyFSM fsm;
     
+    // Add enemy type to customize behavior
+    public int enemyType; // 1, 2, 3, or 4 corresponding to which enemy it is
+    
     // Debugging display
     private boolean showState = true;
     
@@ -24,9 +27,10 @@ class Enemy extends PhysicsObject {
     private final static int ATTACK_COLLISION_START_FRAME = 4; 
     private final static int ATTACK_COLLISION_END_FRAME = 12;
 
-    public Enemy(PVector start, Character player) {
+    public Enemy(PVector start, Character player, int enemyType) {
         super(start, 1.0f); 
         this.player = player;
+        this.enemyType = enemyType;
                 
         loadIdleFrames("PixelArt_Samurai/Enemies/Assassin/PNG/WithoutOutline/Assassin_Idle.png");
         loadHitFrames("PixelArt_Samurai/Enemies/Assassin/PNG/WithoutOutline/Assassin_Hit.png");
@@ -239,5 +243,9 @@ class Enemy extends PhysicsObject {
     // get health
     public int getHealth() {
         return health;
+    }
+
+    public int getEnemyType() {
+        return enemyType;
     }
 }

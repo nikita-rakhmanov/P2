@@ -161,6 +161,24 @@ class PatrolStateHandler implements EnemyStateHandler {
     Enemy enemy = fsm.getOwner();
     enemy.steeringController.clearBehaviors();
     
+    // Customize patrol behavior based on enemy type
+    switch(enemy.getEnemyType()) {
+      case 1: // Aggressive - small patrol area, faster movement
+        patrolWidth = 100.0f;
+        break;
+      case 2: // Mixed - medium area
+        patrolWidth = 150.0f;
+        break;
+      case 3: // Platform enemy - stays in place more
+        patrolWidth = 80.0f;
+        break;
+      case 4: // Evasive - large patrol area
+        patrolWidth = 100.0f;
+        // Add flee behavior to move away from player even during patrol
+        enemy.steeringController.addBehavior(new Flee(enemy.player.position, 0.8f, 150), 0.6f);
+        break;
+    }
+    
     // Set up patrol area around current position
     patrolStart = new PVector(enemy.position.x - patrolWidth/2, enemy.position.y);
     patrolEnd = new PVector(enemy.position.x + patrolWidth/2, enemy.position.y);
@@ -220,9 +238,37 @@ class ChaseStateHandler implements EnemyStateHandler {
     Enemy enemy = fsm.getOwner();
     enemy.steeringController.clearBehaviors();
     
-    // Add seek behavior to chase player - increased force for more noticeable movement
+    // Customize chase behavior based on enemy type
+    float acceleration = 0.9f;
+    float weight = 1.0f;
+    
+    // Enemy type specific behaviors
+    switch(enemy.getEnemyType()) {
+      case 1: // Aggressive chaser
+        acceleration = 1.2f; // Faster
+        weight = 1.0f;
+        break;
+      case 2: // Mixed behavior
+        acceleration = 0.7f; // Medium speed
+        weight = 0.8f;
+        // Add some wandering to make movement less predictable
+        enemy.steeringController.addBehavior(new Wander(0.3f, 50, 30), 0.2f);
+        break;
+      case 3: // Platform enemy, more cautious
+        acceleration = 0.5f; // Slower
+        weight = 0.6f;
+        break;
+      case 4: // Evasive enemy
+        acceleration = 0.6f;
+        weight = 0.4f;
+        // This enemy prefers to keep distance
+        enemy.steeringController.addBehavior(new Flee(enemy.player.position, 0.7f, 100), 0.6f);
+        break;
+    }
+    
+    // Add seek behavior to chase player
     enemy.steeringController.addBehavior(
-      new Seek(enemy.player.position, 0.9f), 1.0f);
+      new Seek(enemy.player.position, acceleration), weight);
     
     // Add a small initial force in the player's direction to kickstart movement
     PVector direction = PVector.sub(enemy.player.position, enemy.position).normalize();
@@ -239,6 +285,9 @@ class ChaseStateHandler implements EnemyStateHandler {
       SteeringBehavior behavior = enemy.steeringController.behaviors.get(i);
       if (behavior instanceof Seek) {
         ((Seek)behavior).targetPosition = enemy.player.position;
+      }
+      else if (behavior instanceof Flee) {
+        ((Flee)behavior).targetPosition = enemy.player.position;
       }
     }
     
@@ -260,8 +309,29 @@ class ChaseStateHandler implements EnemyStateHandler {
       return EnemyState.HIT;
     }
     
+    // Customize ranges based on enemy type
     float attackRange = 25.0f;
     float giveUpRange = 250.0f;
+    
+    switch(enemy.getEnemyType()) {
+      case 1: // Aggressive - never gives up, attacks from further
+        attackRange = 35.0f;
+        giveUpRange = 400.0f;
+        break;
+      case 2: // Mixed - standard values
+        attackRange = 25.0f;
+        giveUpRange = 250.0f;
+        break;
+      case 3: // Platform enemy - more hesitant to attack
+        attackRange = 20.0f;
+        giveUpRange = 200.0f;
+        break;
+      case 4: // Evasive - prefers to keep distance, gives up chase easily
+        attackRange = 20.0f;
+        giveUpRange = 180.0f;
+        break;
+    }
+    
     float distToPlayer = PVector.dist(enemy.position, player.position);
     
     if (distToPlayer < attackRange) {

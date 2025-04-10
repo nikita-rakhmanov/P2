@@ -46,33 +46,22 @@ void setup() {
   // Create character in the middle
   character = new Character(new PVector(width / 2, height - 30));
   
-  // Create enemies on both sides with FSM-based behaviors
-  Enemy enemy1 = new Enemy(new PVector(width / 4, height - 30), character);
-  Enemy enemy2 = new Enemy(new PVector(width * 3 / 4, height - 30), character);
-  Enemy enemy3 = new Enemy(new PVector(width * 0.35f, height - 330 - 20), character); 
-  Enemy enemy4 = new Enemy(new PVector(width * 0.65f, height - 330 - 20), character); 
+  // Create enemies on both sides with FSM-based behaviors, including enemy type
+  Enemy enemy1 = new Enemy(new PVector(width / 4, height - 30), character, 1);
+  Enemy enemy2 = new Enemy(new PVector(width * 3 / 4, height - 30), character, 2);
+  Enemy enemy3 = new Enemy(new PVector(width * 0.35f, height - 330 - 20), character, 3); 
+  Enemy enemy4 = new Enemy(new PVector(width * 0.65f, height - 330 - 20), character, 4); 
 
   enemies.add(enemy1);
   enemies.add(enemy2);
   enemies.add(enemy3);
   enemies.add(enemy4);
 
-  // Each enemy will now use its FSM to determine behavior
-  // But we can configure each one with different initial states or parameters
-
-  // Enemy 1: Aggressive chaser - starts in chase state
+  // Configure initial states
   enemies.get(0).fsm.forceState(EnemyState.CHASE);
-
-  // Enemy 2: Patroller that becomes aggressive when player is nearby
   enemies.get(1).fsm.forceState(EnemyState.PATROL);
-
-  // Enemy 3: Idle until player approaches, then attacks
   enemies.get(2).fsm.forceState(EnemyState.IDLE);
-
-  // Enemy 4: Patrol with flee behavior when player approaches
   enemies.get(3).fsm.forceState(EnemyState.PATROL);
-  // Add a flee behavior with high weight to make this enemy more evasive
-  enemies.get(3).steeringController.addBehavior(new Flee(character.position, 0.9f, 150), 0.8f);
 
   float platformWidth = 32; // width of platform_through.png
 
@@ -616,39 +605,24 @@ void resetGame() {
   // Recreate character, enemies, platforms and springs
   character = new Character(new PVector(width / 2, height - 30));
   
-  // Recreate enemies with opposite patrol directions
-  Enemy enemy1 = new Enemy(new PVector(width / 4, height - 30), character);
-  
-  Enemy enemy2 = new Enemy(new PVector(width * 3 / 4, height - 30), character);
-  
-  // Recreate two more enemies on the third layer platforms 
-  Enemy enemy3 = new Enemy(new PVector(width * 0.35f, height - 330 - 20), character);
-  
-  Enemy enemy4 = new Enemy(new PVector(width * 0.65f, height - 330 - 20), character); 
-  
+  // Create enemies on both sides with FSM-based behaviors, including enemy type
+  Enemy enemy1 = new Enemy(new PVector(width / 4, height - 30), character, 1);
+  Enemy enemy2 = new Enemy(new PVector(width * 3 / 4, height - 30), character, 2);
+  Enemy enemy3 = new Enemy(new PVector(width * 0.35f, height - 330 - 20), character, 3); 
+  Enemy enemy4 = new Enemy(new PVector(width * 0.65f, height - 330 - 20), character, 4); 
+
   enemies.add(enemy1);
   enemies.add(enemy2);
   enemies.add(enemy3);
   enemies.add(enemy4);
 
+  // Configure initial states
+  enemies.get(0).fsm.forceState(EnemyState.CHASE);
+  enemies.get(1).fsm.forceState(EnemyState.PATROL);
+  enemies.get(2).fsm.forceState(EnemyState.IDLE);
+  enemies.get(3).fsm.forceState(EnemyState.PATROL);
+
   float platformWidth = 32;
-
-  enemies.get(0).steeringController.clearBehaviors();
-  enemies.get(0).steeringController.addBehavior(new Seek(character.position, 0.7), 1.0);
-
-  // Enemy 2: Mix of seeking player and wandering - less predictable hunter
-  enemies.get(1).steeringController.clearBehaviors();
-  enemies.get(1).steeringController.addBehavior(new Seek(character.position, 0.4), 0.6);
-  enemies.get(1).steeringController.addBehavior(new Wander(0.3, 50, 30), 0.4);
-
-  // Enemy 3: Wander on platform
-  enemies.get(2).steeringController.clearBehaviors();
-  enemies.get(2).steeringController.addBehavior(new Wander(0.3, 70, 40), 0.5);
-
-  // Enemy 4: Wander on platform and flee from player
-  enemies.get(3).steeringController.clearBehaviors();
-  enemies.get(3).steeringController.addBehavior(new Wander(0.3, 50, 30), 0.4);
-  enemies.get(3).steeringController.addBehavior(new Flee(character.position, 0.6, 150), 0.7);
 
   // Recreate platforms
   platforms.add(new PlatformObject(width * 0.25f - platformWidth, height - 150));
