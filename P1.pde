@@ -16,6 +16,13 @@ GridMap gridMap;
 static PathFinder pathFinder;
 boolean showDebugGrid = false;
 boolean showDebugPath = false;
+int currentCamera = 1; // 1 = default camera, 2 = player follow camera
+float cameraZoom = 1.5f; // Zoom level for the follow camera
+PVector cameraPosition = new PVector(0, 0); // Current camera offset
+float cameraLerpFactor = 0.1f; // How smoothly the camera follows (0-1)
+float targetCameraZoom = 1.0f;
+float currentCameraZoom = 1.0f;
+float cameraTransitionSpeed = 0.05f; // Controls how quickly camera transitions happen
 
 class PlatformObject extends PhysicsObject {
   PImage platformImage;
@@ -210,6 +217,13 @@ void keyPressed() {
       timerRunning = true;
     }
   } else if (!gameOver) { // Only process inputs when game is active
+    // Camera controls
+    if (key == '1') {
+      currentCamera = 1; // Default camera
+    } else if (key == '2') {
+      currentCamera = 2; // Follow camera
+    }
+    
     character.handleKeyPressed(key);
   } else if (key == 'r' || key == 'R') { // Allow restart with 'R' key
     resetGame();
@@ -251,6 +265,51 @@ void mousePressed() {
 
 void draw() {
   background(0);
+  
+  // Handle camera before drawing anything
+  pushMatrix();
+  
+  // Update target zoom based on current camera
+  targetCameraZoom = (currentCamera == 2) ? cameraZoom : 1.0f;
+  
+  // Smoothly interpolate camera zoom
+  currentCameraZoom = lerp(currentCameraZoom, targetCameraZoom, cameraTransitionSpeed);
+  
+  if (character != null) {
+    // For both camera modes, center on the player (with different offsets)
+    PVector targetPosition = new PVector();
+    
+    if (currentCamera == 1) {
+      // For default camera, gradually move to center of the screen
+      float progressToDefaultView = 1.0 - constrain((currentCameraZoom - 1.0) / (cameraZoom - 1.0), 0, 1);
+      
+      // Calculate where the player would be at default scale
+      targetPosition.x = width/2 - character.position.x;
+      targetPosition.y = height/2 - character.position.y;
+      
+      // As we approach default camera view (zoom = 1.0), blend towards center position
+      targetPosition.x = lerp(targetPosition.x, 0, progressToDefaultView);
+      targetPosition.y = lerp(targetPosition.y, 0, progressToDefaultView);
+    } else {
+      // For follow camera, center directly on player
+      targetPosition.x = width/2 - character.position.x * currentCameraZoom;
+      targetPosition.y = height/2 - character.position.y * currentCameraZoom;
+    }
+    
+    // Adaptive lerp speed based on camera mode and distance
+    float distanceToTarget = PVector.dist(cameraPosition, targetPosition);
+    float baseLerpFactor = constrain(cameraLerpFactor * (1 + distanceToTarget / 500), 0.03, 0.2);
+    
+    // Smoother transition for camera position
+    cameraPosition.x = lerp(cameraPosition.x, targetPosition.x, baseLerpFactor);
+    cameraPosition.y = lerp(cameraPosition.y, targetPosition.y, baseLerpFactor);
+    
+    // Apply camera transformation
+    translate(cameraPosition.x, cameraPosition.y);
+    scale(currentCameraZoom);
+  }
+  
+  // Draw the background and game world
   bg.display();
   ground.display();
 
@@ -266,6 +325,7 @@ void draw() {
   
   if (!gameStarted) {
     displayStartScreen();
+    popMatrix(); // Don't forget to pop the matrix before returning
     return;
   }
   
@@ -306,7 +366,18 @@ void draw() {
   
   // Draw all game objects
   drawGameObjects();
+  
+  // Pop the matrix to restore default transformation for HUD drawing
+  popMatrix();
+  
+  // Draw HUD (in screen space)
   displayHUD();
+  
+  // Show camera info
+  // fill(255);
+  // textSize(16);
+  // textAlign(LEFT);
+  // text("Camera: " + (currentCamera == 1 ? "Default" : "Follow Player") + " (Press 1 or 2 to change)", 20, height - 20);
 }
 
 void handleBulletCollisions() {
@@ -762,6 +833,12 @@ void resetGame() {
     physicsEngine.addForceGenerator(enemy, gravity);
     physicsEngine.addForceGenerator(enemy, drag);
   }
+  
+  // Reset camera position and transition values
+  cameraPosition = new PVector(0, 0);
+  currentCamera = 1; // Default back to camera 1
+  currentCameraZoom = 1.0f;
+  targetCameraZoom = 1.0f;
 }
 
 // Update the updateCoins method to stop the timer when the player wins
