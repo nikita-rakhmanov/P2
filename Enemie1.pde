@@ -5,15 +5,20 @@ class Enemy extends PhysicsObject {
     private PImage[] deathFrames;
     private PImage[] runFrames;
     private float currentFrame = 0.0f;
-    private boolean hFlip = false;
+    boolean hFlip = false;
     private int health = 100; 
-    public boolean isDead = false;
-    private boolean isHit = false;
-    private boolean isAttacking = false;
-    private boolean isRunning = false;
-    private Character player; 
+    boolean isDead = false;
+    boolean isHit = false;
+    boolean isAttacking = false;
+    boolean isRunning = false;
+    Character player; 
     public SteeringController steeringController;
-
+    
+    // Add FSM field
+    public EnemyFSM fsm;
+    
+    // Debugging display
+    private boolean showState = true;
     
     // Attack collision detection
     private final static int ATTACK_COLLISION_START_FRAME = 4; 
@@ -32,9 +37,8 @@ class Enemy extends PhysicsObject {
         // Initialize the steering controller
         steeringController = new SteeringController(this);
         
-        // Default behavior is to seek the player
-        Seek seekPlayer = new Seek(player.position, 0.5);
-        steeringController.addBehavior(seekPlayer, 1.0);
+        // Initialize the FSM
+        fsm = new EnemyFSM(this);
     }
 
     // Frame loading methods (unchanged)
@@ -107,83 +111,11 @@ class Enemy extends PhysicsObject {
     }
 
     void update() {
-        // Process behavior and calculate forces
-        updateBehavior();
+        // Update FSM instead of behavior directly
+        fsm.update();
         
-        // handle physics
-        super.update();
-
-    }
-    
-    void updateBehavior() {
-        // First, update target positions for behaviors
-        for (int i = 0; i < steeringController.behaviors.size(); i++) {
-            SteeringBehavior behavior = steeringController.behaviors.get(i);
-            if (behavior instanceof Seek) {
-                ((Seek)behavior).targetPosition = player.position;
-            } else if (behavior instanceof Flee) {
-                ((Flee)behavior).targetPosition = player.position;
-            }
-        }
-        
-        // Handle special states first
-        if (isDead) {
-            // Dead enemies don't move
-            currentFrame += 0.2; 
-            if (currentFrame >= deathFrames.length) {
-                currentFrame = deathFrames.length - 1; 
-            }
-            return;
-        } 
-        
-        if (isHit) {
-            // Hit enemies pause their current behavior
-            isAttacking = false;
-            currentFrame += 0.2; 
-            if (currentFrame >= hitFrames.length) {
-                isHit = false;
-                currentFrame = 0;
-            }
-            return;
-        }
-        
-        if (isAttacking) {
-            // Handle attacking animation and logic
-            if (player.position.x < position.x) {
-                hFlip = true;
-            } else {
-                hFlip = false;
-            }
-            
-            currentFrame += 0.2; 
-            
-            // Check attack collision
-            isInAttackCollisionFrame();
-            isInAttackRange(player);
-            
-            // End attack animation
-            if (currentFrame >= attackFrames.length) {
-                isAttacking = false;
-                isRunning = true;
-                currentFrame = 0;
-            }
-            return;
-        }
-        
-        // Check if player is within attack range
-        if (PVector.dist(position, player.position) < 25.0f) {
-            isAttacking = true;
-            isRunning = false;
-            currentFrame = 0;
-            return;
-        }
-        
-        // Apply steering behaviors
-        steeringController.calculateSteering();
-        
-        // Update animation state based on movement
-        isRunning = Math.abs(velocity.x) > 0.1;
-
+        // Update animation based on state
+        updateAnimation();
         
         // Update facing direction based on movement
         if (velocity.x < -0.1) {
@@ -192,15 +124,58 @@ class Enemy extends PhysicsObject {
             hFlip = false;
         }
         
-        // Update animation frames
+        // If we're moving, update running state
+        isRunning = Math.abs(velocity.x) > 0.1;
+        
+        // Handle physics
+        super.update();
+    }
+    
+    // Animation update separated from behavior
+    void updateAnimation() {
+        // Determine animation speed based on state
+        float animSpeed = 0.1f;
+        
+        if (isDead) {
+            // Death animation
+            animSpeed = 0.2f;
+            currentFrame += animSpeed;
+            if (currentFrame >= deathFrames.length) {
+                currentFrame = deathFrames.length - 1; // Freeze on last frame
+            }
+            return;
+        }
+        
+        if (isHit) {
+            // Hit animation
+            animSpeed = 0.2f;
+            currentFrame += animSpeed;
+            if (currentFrame >= hitFrames.length) {
+                currentFrame = hitFrames.length - 1;
+            }
+            return;
+        }
+        
+        if (isAttacking) {
+            // Attack animation
+            animSpeed = 0.2f;
+            currentFrame += animSpeed;
+            if (currentFrame >= attackFrames.length) {
+                currentFrame = 0;
+                isAttacking = false; // Let FSM handle the next state
+            }
+            return;
+        }
+        
+        // Running or idle animation
         if (isRunning) {
-            currentFrame += 0.1;
+            currentFrame += 0.1f;
             if (currentFrame >= runFrames.length) {
                 currentFrame = 0;
             }
         } else {
             // Idle animation
-            currentFrame += 0.1;
+            currentFrame += 0.1f;
             if (currentFrame >= idleFrames.length) {
                 currentFrame = 0;
             }
@@ -210,15 +185,15 @@ class Enemy extends PhysicsObject {
     void draw() {
         PImage frame;
         if (isDead) {
-            frame = deathFrames[(int)currentFrame];
+            frame = deathFrames[min((int)currentFrame, deathFrames.length-1)];
         } else if (isHit) {
-            frame = hitFrames[(int)currentFrame];
+            frame = hitFrames[min((int)currentFrame, hitFrames.length-1)];
         } else if (isAttacking) {
-            frame = attackFrames[(int)currentFrame];
+            frame = attackFrames[min((int)currentFrame, attackFrames.length-1)];
         } else if (isRunning) {
-            frame = runFrames[(int)currentFrame];
+            frame = runFrames[min((int)currentFrame, runFrames.length-1)];
         } else {
-            frame = idleFrames[(int)currentFrame];
+            frame = idleFrames[min((int)currentFrame, idleFrames.length-1)];
         }
 
         if (hFlip) {
@@ -228,6 +203,16 @@ class Enemy extends PhysicsObject {
             popMatrix();
         } else {
             image(frame, this.position.x, this.position.y);
+        }
+        
+        // Draw state above enemy (for debugging)
+        if (showState) {
+            pushStyle();
+            fill(255);
+            textAlign(CENTER);
+            textSize(12);
+            text(fsm.getCurrentState().toString(), position.x, position.y - 40);
+            popStyle();
         }
     }
 
@@ -255,5 +240,4 @@ class Enemy extends PhysicsObject {
     public int getHealth() {
         return health;
     }
-
 }

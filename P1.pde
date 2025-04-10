@@ -46,14 +46,10 @@ void setup() {
   // Create character in the middle
   character = new Character(new PVector(width / 2, height - 30));
   
-  // Create enemies on both sides with opposite patrol directions
+  // Create enemies on both sides with FSM-based behaviors
   Enemy enemy1 = new Enemy(new PVector(width / 4, height - 30), character);
-  
   Enemy enemy2 = new Enemy(new PVector(width * 3 / 4, height - 30), character);
-  
-  // Create two more enemies
   Enemy enemy3 = new Enemy(new PVector(width * 0.35f, height - 330 - 20), character); 
-  
   Enemy enemy4 = new Enemy(new PVector(width * 0.65f, height - 330 - 20), character); 
 
   enemies.add(enemy1);
@@ -61,27 +57,44 @@ void setup() {
   enemies.add(enemy3);
   enemies.add(enemy4);
 
+  // Each enemy will now use its FSM to determine behavior
+  // But we can configure each one with different initial states or parameters
+
+  // Enemy 1: Aggressive chaser - starts in chase state
+  enemies.get(0).fsm.forceState(EnemyState.CHASE);
+
+  // Enemy 2: Patroller that becomes aggressive when player is nearby
+  enemies.get(1).fsm.forceState(EnemyState.PATROL);
+
+  // Enemy 3: Idle until player approaches, then attacks
+  enemies.get(2).fsm.forceState(EnemyState.IDLE);
+
+  // Enemy 4: Patrol with flee behavior when player approaches
+  enemies.get(3).fsm.forceState(EnemyState.PATROL);
+  // Add a flee behavior with high weight to make this enemy more evasive
+  enemies.get(3).steeringController.addBehavior(new Flee(character.position, 0.9f, 150), 0.8f);
+
   float platformWidth = 32; // width of platform_through.png
 
-  enemies.get(0).steeringController.clearBehaviors();
-  enemies.get(0).steeringController.addBehavior(new Seek(character.position, 0.7), 1.0);
+  // enemies.get(0).steeringController.clearBehaviors();
+  // enemies.get(0).steeringController.addBehavior(new Seek(character.position, 0.7), 1.0);
 
-  // Enemy 2: Mix of seeking player and wandering - less predictable hunter
-  enemies.get(1).steeringController.clearBehaviors();
-  enemies.get(1).steeringController.addBehavior(new Seek(character.position, 0.4), 0.6);
-  enemies.get(1).steeringController.addBehavior(new Wander(0.3, 50, 30), 0.4);
+  // // Enemy 2: Mix of seeking player and wandering - less predictable hunter
+  // enemies.get(1).steeringController.clearBehaviors();
+  // enemies.get(1).steeringController.addBehavior(new Seek(character.position, 0.4), 0.6);
+  // enemies.get(1).steeringController.addBehavior(new Wander(0.3, 50, 30), 0.4);
 
-  float platform3LeftX = width * 0.35f - platformWidth - platformWidth/2; // Leftmost edge of left platform
-  float platform3RightX = width * 0.35f + platformWidth + platformWidth/2; // Rightmost edge of right platform
-  float platform3Y = height - 330 - 8; // Approximate top surface of platform (-8 for visual adjustment)
+  // float platform3LeftX = width * 0.35f - platformWidth - platformWidth/2; // Leftmost edge of left platform
+  // float platform3RightX = width * 0.35f + platformWidth + platformWidth/2; // Rightmost edge of right platform
+  // float platform3Y = height - 330 - 8; // Approximate top surface of platform (-8 for visual adjustment)
 
-  // Enemy 3: Wander on platform - increase wander parameters
-  enemies.get(2).steeringController.clearBehaviors();
-  enemies.get(2).steeringController.addBehavior(
-    new BoundedWander(0.18, 30, 15, platform3LeftX, platform3RightX, platform3Y), 1.0);
-  // Enemy 4: Wander on platform and flee from player
-  enemies.get(3).steeringController.clearBehaviors();
-  enemies.get(3).steeringController.addBehavior(new Flee(character.position, 0.9, 150), 0.7);
+  // // Enemy 3: Wander on platform - increase wander parameters
+  // enemies.get(2).steeringController.clearBehaviors();
+  // enemies.get(2).steeringController.addBehavior(
+  //   new BoundedWander(0.18, 30, 15, platform3LeftX, platform3RightX, platform3Y), 1.0);
+  // // Enemy 4: Wander on platform and flee from player
+  // enemies.get(3).steeringController.clearBehaviors();
+  // enemies.get(3).steeringController.addBehavior(new Flee(character.position, 0.9, 150), 0.7);
     
   // Create platforms for vertical traversal 
   // First layer - low platforms 
