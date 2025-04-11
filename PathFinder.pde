@@ -1,4 +1,4 @@
-import java.util.Collections;
+import java.util.Collections; // For Collections.reverse()
 
 // A* pathfinding implementation
 class PathFinder {
@@ -21,10 +21,10 @@ class PathFinder {
   }
   
   // Heuristic function: h(n) = |Δx| + max(0, Δy)
-  // This favors horizontal movement and falling down (but not rising up)
+  // This favors horizontal movement and falling down 
   float heuristic(PVector a, PVector b) {
     float dx = abs(a.x - b.x);
-    float dy = a.y - b.y; // Note: y increases downward in Processing
+    float dy = a.y - b.y; 
     return dx + max(0, dy);
   }
   
@@ -48,7 +48,6 @@ class PathFinder {
       return new Path();
     }
     
-    // Add this new check for platforms - prevent pathfinding when on same platform but no direct path
     PVector startGrid = gridMap.worldToGrid(startPos);
     PVector goalGrid = gridMap.worldToGrid(goalPos);
     
@@ -59,7 +58,7 @@ class PathFinder {
       int goalX = (int)goalGrid.x;
       int goalY = (int)goalGrid.y;
       
-      // Check if there's a continuous walkable path between them
+      // Check if there's a continuous walkable path 
       boolean hasDirectPath = true;
       for (int x = Math.min(startX, goalX); x <= Math.max(startX, goalX); x++) {
         if (!gridMap.isValid(x, startY) || !gridMap.isWalkable(x, startY)) {
@@ -121,12 +120,12 @@ class PathFinder {
     while (!openSet.isEmpty()) {
       // Check time and iteration limits
       if (millis() - startTime > MAX_SEARCH_TIME) {
-        println("A* search timed out after " + MAX_SEARCH_TIME + "ms");
+        // println("A* search timed out after " + MAX_SEARCH_TIME + "ms");
         return new Path();
       }
       
       if (iterations++ > MAX_ITERATIONS) {
-        println("A* search exceeded max iterations (" + MAX_ITERATIONS + ")");
+        // println("A* search exceeded max iterations (" + MAX_ITERATIONS + ")");
         return new Path();
       }
       // Find node with lowest f cost
@@ -263,7 +262,7 @@ class PathFinder {
     Path path = new Path();
     Node current = goalNode;
     
-    // Add a safety counter to prevent infinite loops
+    // Add a safety counter for debugging
     int safetyCounter = 0;
     final int MAX_PATH_NODES = 200; // Safety limit
     
@@ -275,7 +274,7 @@ class PathFinder {
     }
     
     if (safetyCounter >= MAX_PATH_NODES) {
-      println("Warning: Path reconstruction safety limit reached. Possible circular reference.");
+      // println("Warning: Path reconstruction safety limit reached. Possible circular reference.");
     }
     
     // Reverse to get path from start to goal
@@ -302,7 +301,7 @@ class PathFinder {
       PVector currentGrid = gridMap.worldToGrid(current);
       PVector nextGrid = gridMap.worldToGrid(next);
       
-      // Only optimize if on same y-level (don't mess with falling)
+      // Only optimize if on same y-level (so we don't mess with falling)
       if (currentGrid.y == nextGrid.y) {
         int x1 = (int)currentGrid.x;
         int x2 = (int)nextGrid.x;

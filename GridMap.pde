@@ -1,4 +1,3 @@
-// Grid map for pathfinding - handles conversion between game world and grid
 class GridMap {
   Node[][] grid;
   int cols, rows;
@@ -51,7 +50,6 @@ class GridMap {
   }
   
   // Get neighbors of a node - specialized for platformer movement
-  // Enemies can only move left/right or fall down (no jumping)
   ArrayList<Node> getNeighbors(Node node) {
     ArrayList<Node> neighbors = new ArrayList<Node>();
     int x = (int)node.position.x;

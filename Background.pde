@@ -40,7 +40,7 @@ class Background {
     starBrightness = new float[numStars];
     
     for (int i = 0; i < numStars; i++) {
-      // Position stars randomly across the sky, but mostly in upper portion
+      // Position stars randomly across the sky
       starPositions[i] = new PVector(
         random(width), 
         random(height * 0.7) // Keep stars in upper 70% of screen
@@ -55,7 +55,6 @@ class Background {
   }
   
   void extractWaterfallFrames() {
-    // spritesheet has 8 frames in a row
     int frameCount = 8;
     waterfallFrames = new PImage[frameCount];
     
@@ -99,7 +98,7 @@ class Background {
             mountainsImg.width * mountainScale, mountainsImg.height * mountainScale);
     }
     
-    // Draw front mountains at the LEFT edge
+    // Draw front mountains at the left edge
     float frontMountainScale = 1.5;
     float frontMountainY = height - frontMountainsImg.height * frontMountainScale * 0.9;
     
@@ -126,7 +125,7 @@ class Background {
       flip = !flip;
     }
 
-    // Draw animated waterfall at the RIGHT edge of the screen
+    // Draw animated waterfall at the right edge of the screen
     drawWaterfall();
   }
   
@@ -174,8 +173,7 @@ class Background {
     // Scale waterfall to appropriate size
     float waterfallScale = 1.5;
     
-    // Position waterfall at the RIGHT edge of the screen
-    // Use imageMode(CORNER) to position it differently
+    // Position waterfall at the right edge of the screen
     pushStyle();
     imageMode(CORNER);
     

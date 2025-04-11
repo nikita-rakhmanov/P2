@@ -1,4 +1,3 @@
-// Define possible enemy states
 enum EnemyState {
   IDLE,
   PATROL,
@@ -163,7 +162,7 @@ class PatrolStateHandler implements EnemyStateHandler {
     
     // Customize patrol behavior based on enemy type
     switch(enemy.getEnemyType()) {
-      case 1: // Aggressive - small patrol area, faster movement
+      case 1: // Aggressive 
         patrolWidth = 100.0f;
         break;
       case 2: // Mixed - medium area
@@ -172,7 +171,7 @@ class PatrolStateHandler implements EnemyStateHandler {
       case 3: // Platform enemy - stays in place more
         patrolWidth = 100.0f;
         break;
-      case 4: // Evasive - large patrol area
+      case 4: // Evasive
         patrolWidth = 100.0f;
         // Add flee behavior to move away from player even during patrol
         enemy.steeringController.addBehavior(new Flee(enemy.player.position, 1.2f, 200), 0.8f);
@@ -183,7 +182,7 @@ class PatrolStateHandler implements EnemyStateHandler {
     patrolStart = new PVector(enemy.position.x - patrolWidth/2, enemy.position.y);
     patrolEnd = new PVector(enemy.position.x + patrolWidth/2, enemy.position.y);
     
-    // Add wander behavior for patrolling - increased force for more noticeable movement
+    // Add wander behavior for patrolling 
     enemy.steeringController.addBehavior(
       new BoundedWander(0.3f, 30, 15, 
                        patrolStart.x, 
@@ -212,7 +211,7 @@ class PatrolStateHandler implements EnemyStateHandler {
   }
   
   void exit() {
-    // Nothing specific to clean up
+    // Nothing to clean up
   }
   
   EnemyState checkTransitions() {
@@ -236,7 +235,7 @@ class PatrolStateHandler implements EnemyStateHandler {
   }
 }
 
-// Simplified ChaseStateHandler class that follows exactly the logic you described
+// ChaseStateHandler class
 class ChaseStateHandler implements EnemyStateHandler {
   private EnemyFSM fsm;
   private Path currentPath;
@@ -252,7 +251,7 @@ class ChaseStateHandler implements EnemyStateHandler {
     Enemy enemy = fsm.getOwner();
     enemy.steeringController.clearBehaviors();
     
-    // For evasive enemy (type 4), don't use pathfinding at all
+    // For evasive enemy (type 4), don't use pathfinding at all - evasive behavior
     if (enemy.getEnemyType() == 4) {
       usePathfinding = false;
       setupSteeringBehaviors(enemy);
@@ -302,7 +301,7 @@ class ChaseStateHandler implements EnemyStateHandler {
   }
   
   private void setupSteeringBehaviors(Enemy enemy) {
-    // This is the fallback behavior if pathfinding fails
+    // fallback behavior if pathfinding fails
     float acceleration = 0.9f;
     float weight = 1.0f;
     
@@ -380,7 +379,7 @@ class ChaseStateHandler implements EnemyStateHandler {
       float playerMovementDistance = PVector.dist(enemy.player.position, lastPlayerPosition);
       
       if (playerMovementDistance > playerMovementThreshold) {
-        println("Player moved, recalculating path...");
+        // println("Player moved, recalculating path...");
         // Player has moved significantly, recalculate path
         calculateNewPath(enemy);
         lastPlayerPosition = enemy.player.position.copy();
@@ -393,7 +392,7 @@ class ChaseStateHandler implements EnemyStateHandler {
         if (firstPoint != null) {
           float distToFirstPoint = PVector.dist(enemy.position, firstPoint);
           if (distToFirstPoint > 200) {
-            println("Path is too far, recalculating...");
+            // println("Path is too far, recalculating...");
             calculateNewPath(enemy);
           }
         }
@@ -445,7 +444,7 @@ class ChaseStateHandler implements EnemyStateHandler {
         attackRange = 20.0f;
         giveUpRange = 100.0f;
         break;
-      case 4: // Evasive - prefers to keep distance, gives up chase easily
+      case 4: // Evasive - prefers to keep distance and gives up chase easily
         attackRange = 20.0f;
         giveUpRange = 90.0f;
         break;
@@ -587,7 +586,7 @@ class DeadStateHandler implements EnemyStateHandler {
   }
   
   void exit() {
-    // Enemy shouldn't exit the dead state
+    // nothing to clean up
   }
   
   EnemyState checkTransitions() {

@@ -1,4 +1,3 @@
-// Simplified PathFollow steering behavior
 class PathFollow implements SteeringBehavior {
   Path path;
   float arrivalRadius;
@@ -54,7 +53,7 @@ class PathFollow implements SteeringBehavior {
       distance = toTarget.mag();
     }
     
-    // Calculate force - mainly horizontal for platformer
+    // Calculate force
     PVector force = new PVector(toTarget.x, 0);
     
     // Allow vertical force when we need to fall down
@@ -68,7 +67,7 @@ class PathFollow implements SteeringBehavior {
       force.mult(maxAcceleration);
     }
     
-    // Draw debug visualization if enabled
+    // Draw debug visualization 
     if (debugDraw && target != null) {
       pushStyle();
       

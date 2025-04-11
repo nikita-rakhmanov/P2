@@ -6,8 +6,8 @@ class Coin {
   private float currentFrame = 0.0f;
   private boolean collected = false;
   private final float ANIMATION_SPEED = 0.2f;
-  private float radius = 25.0f; // Increased collision radius for larger coin
-  private float scale = 1.5f;   // Scale factor for larger coin
+  private float radius = 25.0f;
+  private float scale = 1.5f;   
   
   // Glow effect properties
   private float glowIntensity = 0;
@@ -61,22 +61,22 @@ class Coin {
       blendMode(ADD);
       noStroke();
       
-      // Outer glow - reduced size
+      // Outer glow
       fill(glowColor, 40 * glowIntensity);
       ellipse(position.x, position.y, radius * 2.2f * scale, radius * 2.2f * scale);
       
-      // Middle glow - reduced size
+      // Middle glow
       fill(glowColor, 80 * glowIntensity);
       ellipse(position.x, position.y, radius * 1.6f * scale, radius * 1.6f * scale);
       
-      // Inner glow - reduced size
+      // Inner glow 
       fill(glowColor, 120 * glowIntensity);
       ellipse(position.x, position.y, radius * 1.2f * scale, radius * 1.2f * scale);
       
       blendMode(BLEND);
     }
     
-    // Draw the actual coin image (keep the same size)
+    // Draw the actual coin image 
     image(frames[frameIndex], position.x, position.y, 
           frames[frameIndex].width * scale, 
           frames[frameIndex].height * scale);

@@ -1,7 +1,6 @@
-// Path class to represent a found path
 class Path {
   ArrayList<PVector> points;
-  private final int MAX_PATH_LENGTH = 200; // Set a reasonable maximum path length
+  private final int MAX_PATH_LENGTH = 200; // reasonable maximum path length
   
   Path() {
     points = new ArrayList<PVector>();
@@ -14,7 +13,7 @@ class Path {
     } else {
       // Print a warning if we hit the limit (helps with debugging)
       if (points.size() == MAX_PATH_LENGTH) {
-        println("Warning: Maximum path length reached (" + MAX_PATH_LENGTH + "), truncating path");
+        // println("Warning: Maximum path length reached (" + MAX_PATH_LENGTH + "), truncating path");
       }
     }
   }

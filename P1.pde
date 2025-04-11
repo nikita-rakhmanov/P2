@@ -1,3 +1,5 @@
+import processing.sound.*;
+
 Background bg;
 Character character;
 Platform ground;
@@ -17,12 +19,18 @@ static PathFinder pathFinder;
 boolean showDebugGrid = false;
 boolean showDebugPath = false;
 int currentCamera = 1; // 1 = default camera, 2 = player follow camera
-float cameraZoom = 1.5f; // Zoom level for the follow camera
-PVector cameraPosition = new PVector(0, 0); // Current camera offset
-float cameraLerpFactor = 0.1f; // How smoothly the camera follows (0-1)
+float cameraZoom = 1.5f; 
+PVector cameraPosition = new PVector(0, 0); 
+float cameraLerpFactor = 0.1f; 
 float targetCameraZoom = 1.0f;
 float currentCameraZoom = 1.0f;
-float cameraTransitionSpeed = 0.05f; // Controls how quickly camera transitions happen
+float cameraTransitionSpeed = 0.05f; 
+SoundFile bgMusic;
+boolean musicEnabled = true;
+float musicVolume = 0.4f; 
+float currentMusicVolume = 0.0f; 
+float fadeSpeed = 0.001f; 
+boolean fadingIn = true; 
 
 class PlatformObject extends PhysicsObject {
   PImage platformImage;
@@ -46,6 +54,13 @@ void setup() {
   noSmooth();
   imageMode(CENTER);
   textMode(CENTER);
+
+  // Load and start background music
+  bgMusic = new SoundFile(this, "music/bg_song.mp3");
+  bgMusic.loop();
+  bgMusic.amp(0); // Start with volume at 0 for fade in
+  currentMusicVolume = 0.0f;
+  fadingIn = true;
 
   // physics engine
   physicsEngine = new PhysicsEngine();
@@ -145,13 +160,12 @@ void setup() {
   }
 }
 
-// Add this function to initialize the pathfinding grid
+// initialize the pathfinding grid
 void setupPathfinding() {
   float cellSize = 16.0f; // Size of each grid cell in pixels
   gridMap = new GridMap(width, height, cellSize);
   
-  // Get actual ground height based on your game
-  float groundLevel = height; // This is where the character stands on the ground
+  float groundLevel = height; //  where the character stands on the ground
   
   // Mark all cells below ground level as non-walkable
   for (int x = 0; x < gridMap.cols; x++) {
@@ -229,6 +243,21 @@ void keyPressed() {
     resetGame();
   }
 
+  // Toggle music with 'M' key
+  if (key == 'm' || key == 'M') {
+    musicEnabled = !musicEnabled;
+    if (musicEnabled) {
+      // Start fading in music
+      if (!bgMusic.isPlaying()) {
+        bgMusic.loop();  // Use loop() instead of play()
+      }
+      fadingIn = true;
+    } else {
+      // Start fading out music (actual pause happens when volume reaches 0)
+      fadingIn = false;
+    }
+  }
+
   // Toggle debug grid display with 'G' key
   if (key == 'g' || key == 'G') {
     showDebugGrid = !showDebugGrid;
@@ -266,6 +295,9 @@ void mousePressed() {
 void draw() {
   background(0);
   
+  // Handle music volume fading
+  updateMusicFade();
+  
   // Handle camera before drawing anything
   pushMatrix();
   
@@ -276,7 +308,7 @@ void draw() {
   currentCameraZoom = lerp(currentCameraZoom, targetCameraZoom, cameraTransitionSpeed);
   
   if (character != null) {
-    // For both camera modes, center on the player (with different offsets)
+    // For both camera modes, center on the player 
     PVector targetPosition = new PVector();
     
     if (currentCamera == 1) {
@@ -287,8 +319,7 @@ void draw() {
       targetPosition.x = lerp(targetPosition.x, 0, progressToDefaultView);
       targetPosition.y = lerp(targetPosition.y, 0, progressToDefaultView);
     } else {
-      // For follow camera, constrain view with proper boundary handling
-      
+      // Follow camera logic      
       // Calculate the visible area in world coordinates
       float visibleWidth = width / currentCameraZoom;
       float visibleHeight = height / currentCameraZoom;
@@ -313,11 +344,11 @@ void draw() {
       }
     }
     
-    // Adaptive lerp speed based on camera mode and distance
+    // Adaptive lerp speed 
     float distanceToTarget = PVector.dist(cameraPosition, targetPosition);
     float baseLerpFactor = constrain(cameraLerpFactor * (1 + distanceToTarget / 500), 0.03, 0.2);
     
-    // Smoother transition for camera position
+    // Smooth transition for camera position
     cameraPosition.x = lerp(cameraPosition.x, targetPosition.x, baseLerpFactor);
     cameraPosition.y = lerp(cameraPosition.y, targetPosition.y, baseLerpFactor);
     
@@ -390,11 +421,33 @@ void draw() {
   // Draw HUD (in screen space)
   displayHUD();
   
-  // Show camera info
-//   fill(255);
-//   textSize(16);
-//   textAlign(LEFT);
-//   text("Camera: " + (currentCamera == 1 ? "Default" : "Follow Player") + " (Press 1 or 2 to change)", 20, height - 20);
+  // Show camera and music info
+  fill(255);
+  textSize(16);
+  textAlign(LEFT);
+  text("Camera: " + (currentCamera == 1 ? "Default" : "Follow Player") + " ('1' or '2' to change)", 50, height - 650);
+  text("Music: " + (musicEnabled ? "ON" : "OFF") + " (Press 'M' to toggle)", 50, height - 620);
+}
+
+// Function to handle music fade in/out
+void updateMusicFade() {
+  if (fadingIn && musicEnabled) {
+    // Fade in
+    currentMusicVolume += fadeSpeed;
+    if (currentMusicVolume >= musicVolume) {
+      currentMusicVolume = musicVolume;
+      fadingIn = false;
+    }
+    bgMusic.amp(currentMusicVolume);
+  } else if (!fadingIn && !musicEnabled) {
+    // Fade out
+    currentMusicVolume -= fadeSpeed;
+    if (currentMusicVolume <= 0) {
+      currentMusicVolume = 0;
+      bgMusic.pause();
+    }
+    bgMusic.amp(currentMusicVolume);
+  }
 }
 
 void handleBulletCollisions() {
@@ -554,8 +607,6 @@ void handleEnemyPlatformCollisions() {
   }
 }
 
-
-
 void checkSprings() {
   for (Spring spring : springs) {
     // Calculate distance between character's feet and spring's top surface
@@ -705,6 +756,7 @@ void displayStartScreen() {
   text("W - Jump", width/2, yPos + 35);
   text("SPACE - Attack", width/2, yPos + 70);
   text("SHIFT - Glide", width/2, yPos + 105);
+  text("M - Toggle music", width/2, yPos + 140);
   
   // Start prompt
   textSize(30);
@@ -856,6 +908,14 @@ void resetGame() {
   currentCamera = 1; // Default back to camera 1
   currentCameraZoom = 1.0f;
   targetCameraZoom = 1.0f;
+
+  // If music was disabled, keep it that way
+  if (musicEnabled && !bgMusic.isPlaying()) {
+    bgMusic.play();
+    fadingIn = true;
+    currentMusicVolume = 0;
+    bgMusic.amp(0);
+  }
 }
 
 // Update the updateCoins method to stop the timer when the player wins
@@ -921,4 +981,3 @@ void updateCoins() {
     }
   }
 }
-

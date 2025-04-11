@@ -14,14 +14,14 @@ class Enemy extends PhysicsObject {
     Character player; 
     public SteeringController steeringController;
     
-    // Add FSM field
+    // FSM 
     public EnemyFSM fsm;
     
     // Add enemy type to customize behavior
     public int enemyType; // 1, 2, 3, or 4 corresponding to which enemy it is
     
     // Debugging display
-    private boolean showState = true;
+    private boolean showState = false; // Set to true to show the current state above the enemy
     
     // Attack collision detection
     private final static int ATTACK_COLLISION_START_FRAME = 4; 
@@ -45,7 +45,7 @@ class Enemy extends PhysicsObject {
         fsm = new EnemyFSM(this);
     }
 
-    // Frame loading methods (unchanged)
+    // Frame loading methods 
     void loadIdleFrames(String imgPath) {
         PImage spriteSheet = loadImage(imgPath);
         int frameCount = 8; // Number of frames in the sprite sheet

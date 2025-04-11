@@ -1,9 +1,8 @@
-// Node class for A* pathfinding
-class Node {
+class Node { // Node class for A* pathfinding
   PVector position; // Grid position (x,y)
   float f, g, h;    // f = g + h (total cost, path cost, heuristic)
   Node parent;      // Parent node for path reconstruction
-  boolean walkable; // Can the enemy walk on this node?
+  boolean walkable; // determines if the node is walkable
   
   Node(PVector position, boolean walkable) {
     this.position = position;
